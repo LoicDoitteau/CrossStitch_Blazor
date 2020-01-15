@@ -1,0 +1,34 @@
+@using CrossStitchApp.Models
+@inject HttpClient Http
+
+@if (grid == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <svg xmlns="http://www.w3.org/2000/svg">
+        @foreach(var cell in grid.Cells)
+        {
+            <rect
+                x="@(cell.Position.X * 30)"
+                y="@(cell.Position.Y * 30)"
+                width="30"
+                height="30"
+                fill="rgb(@cell.Color.R, @cell.Color.G, @cell.Color.B)"
+                stroke="black"
+                stroke_width=2>
+            </rect>
+        }
+
+    </svg>
+}
+
+@code {
+    private CrossStitchApp.Models.Grid grid;
+
+    protected override void OnInitialized()
+    {
+        grid = new CrossStitchApp.Models.Grid(100, 100);
+    }
+}

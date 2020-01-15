@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Blazor.Hosting;
 
-namespace CrossStichApp
+namespace CrossStitchApp
 {
     public class Program
     {
