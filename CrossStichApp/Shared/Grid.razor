@@ -1,34 +1,58 @@
 @using CrossStitchApp.Models
+@using Blazor.Extensions.Canvas.Canvas2D
+@using Blazor.Extensions
 @inject HttpClient Http
 
-@if (grid == null)
-{
-    <p><em>Loading...</em></p>
-}
-else
-{
-    <svg xmlns="http://www.w3.org/2000/svg">
-        @foreach(var cell in grid.Cells)
-        {
-            <rect
-                x="@(cell.Position.X * 30)"
-                y="@(cell.Position.Y * 30)"
-                width="30"
-                height="30"
-                fill="rgb(@cell.Color.R, @cell.Color.G, @cell.Color.B)"
-                stroke="black"
-                stroke_width=2>
-            </rect>
-        }
-
-    </svg>
-}
+<input @bind-value="Rows"/>
+<input @bind-value="Cols"/>
+<input @bind-value="Size"/>
+<button class="btn btn-primary" @onclick="Display">Display</button>
+<BECanvas Width="300" Height="400" @ref="canvasReference" ></BECanvas>
 
 @code {
-    private CrossStitchApp.Models.Grid grid;
+    [Parameter]
+    public int Cols {get; set;} = 10;
 
-    protected override void OnInitialized()
+    [Parameter]
+    public int Rows {get; set;} = 10;
+
+    [Parameter]
+    public int Size {get; set;} = 30;
+
+    private GridViewModel grid;
+
+    private Canvas2DContext context;
+
+    protected BECanvasComponent canvasReference;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        grid = new CrossStitchApp.Models.Grid(100, 100);
+        if (firstRender)
+        {
+            context = await canvasReference.CreateCanvas2DAsync();
+
+            await context.SetLineWidthAsync(2);
+            await context.SetFillStyleAsync($"black");
+        }
+    }
+
+    public async Task Display()
+    {
+        grid = new GridViewModel(Rows, Cols);
+        await context.ClearRectAsync(0, 0, canvasReference.Width, canvasReference.Height);
+        await context.BeginBatchAsync();
+        foreach(var cell in grid.Cells)
+        {
+            var x = cell.Position.X * Size;
+            var y = cell.Position.Y * Size;
+
+            if(x > canvasReference.Width || y > canvasReference.Height) continue;
+
+            var style = $"rgb({cell.Color.R}, {cell.Color.G}, {cell.Color.B})";
+            await context.SetFillStyleAsync(style);
+            await context.FillRectAsync(x, y, Size, Size);
+            await context.StrokeRectAsync(x, y, Size, Size);
+        }
+        await context.EndBatchAsync();
     }
 }
