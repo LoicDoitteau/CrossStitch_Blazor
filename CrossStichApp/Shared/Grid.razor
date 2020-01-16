@@ -3,21 +3,20 @@
 @using Blazor.Extensions
 @inject HttpClient Http
 
-<input @bind-value="Rows"/>
-<input @bind-value="Cols"/>
-<input @bind-value="Size"/>
-<button class="btn btn-primary" @onclick="Display">Display</button>
-<BECanvas Width="300" Height="400" @ref="canvasReference" ></BECanvas>
+<input @bind-value="Rows" disabled="@IsBusy"/>
+<input @bind-value="Cols" disabled="@IsBusy"/>
+<input @bind-value="Size" disabled="@IsBusy"/>
+<button disabled="@IsBusy" class="btn btn-primary" @onclick="Display">Display</button>
+<BECanvas Width="600" Height="600" @ref="canvasReference" ></BECanvas>
 
 @code {
-    [Parameter]
-    public int Cols {get; set;} = 10;
+    private int Cols {get; set;} = 10;
 
-    [Parameter]
-    public int Rows {get; set;} = 10;
+    private int Rows {get; set;} = 10;
 
-    [Parameter]
-    public int Size {get; set;} = 30;
+    private int Size {get; set;} = 30;
+
+    private bool IsBusy {get; set;} = false;
 
     private GridViewModel grid;
 
@@ -31,16 +30,22 @@
         {
             context = await canvasReference.CreateCanvas2DAsync();
 
-            await context.SetLineWidthAsync(2);
+            await context.SetLineWidthAsync(1);
             await context.SetFillStyleAsync($"black");
         }
     }
 
     public async Task Display()
     {
+        IsBusy = true;
         grid = new GridViewModel(Rows, Cols);
+        await ShowGrid();
+        IsBusy = false;
+    }
+
+    private async Task ShowGrid()
+    {
         await context.ClearRectAsync(0, 0, canvasReference.Width, canvasReference.Height);
-        await context.BeginBatchAsync();
         foreach(var cell in grid.Cells)
         {
             var x = cell.Position.X * Size;
@@ -52,7 +57,7 @@
             await context.SetFillStyleAsync(style);
             await context.FillRectAsync(x, y, Size, Size);
             await context.StrokeRectAsync(x, y, Size, Size);
+            await Task.Yield();
         }
-        await context.EndBatchAsync();
     }
 }
